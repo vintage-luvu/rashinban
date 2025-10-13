@@ -5,16 +5,43 @@ import React from "react";
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 export default function Home() {
-  const data = [
-    { x: [1, 2, 3], y: [2, 6, 3], type: "scatter", mode: "lines+markers", marker: { color: "red" } },
-  ];
+  const [data, setData] = useState(null);
 
-  const layout = { width: 600, height: 400, title: "A Fancy Plot" };
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    // FastAPIに送信
+    const res = await fetch("http://localhost:8000/upload-csv", {
+      method: "POST",
+      body: formData,
+    });
+    const json = await res.json();
+    setData(json);
+  };
+
+  // JSONからPlotly用の配列に変換
+  const plotData = data
+    ? Object.keys(data).map((col) => ({
+        x: data[col].map((_, i) => i),
+        y: data[col],
+        type: "scatter",
+        mode: "lines+markers",
+        name: col,
+      }))
+    : [];
 
   return (
-    <div>
-      <h1>サンプルグラフ</h1>
-      <Plot data={data} layout={layout} />
+    <div style={{ padding: "2rem" }}>
+      <h1>CSVアップロードでグラフ化</h1>
+      <input type="file" accept=".csv" onChange={handleFileChange} />
+      {plotData.length > 0 && (
+        <Plot
+          data={plotData}
+          layout={{ width: 800, height: 600, title: "CSVグラフ" }}
+        />
+      )}
     </div>
   );
 }
