@@ -1,59 +1,66 @@
-import { useState } from "react";
-import dynamic from "next/dynamic";
-import 'tailwindcss/tailwind.css';
+"use client";
 
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+import { useState } from "react";
 
 export default function Home() {
-  const [aiResult, setAiResult] = useState("");
-  const [data, setData] = useState([
-    { name: "商品A", value: 30 },
-    { name: "商品B", value: 50 },
-    { name: "商品C", value: 20 },
-  ]);
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState("");
 
-  const runAnalysis = () => {
-    // 本来はAPIでAI分析を呼ぶ
-    setAiResult("✅ 会社全体は健全。特に売上向上が期待できる部門は商品Bです。");
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+    setResult("");
+  };
+
+  const handleAnalyze = async () => {
+    if (!file) return alert("CSVファイルを選択してください");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setLoading(true);
+    setResult("");
+
+    try {
+      const res = await fetch("http://localhost:8000/api/analyze_csv", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      setResult(data.analysis);
+    } catch (err) {
+      setResult("エラーが発生しました: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-4xl font-bold text-center text-gradient mb-6">
-        羅針盤データ分析
-      </h1>
+    <div className="max-w-2xl mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4 text-center">羅針盤 - AI経営分析</h1>
 
-      <div className="text-center mb-4">
-        <button
-          className="bg-gradient-to-r from-pink-500 to-yellow-400 text-white px-6 py-2 rounded-lg shadow-md hover:opacity-90 transition"
-          onClick={runAnalysis}
-        >
-          AI分析を実行
-        </button>
-      </div>
+      <input type="file" accept=".csv" onChange={handleFileChange} className="mb-4" />
 
-      {aiResult && (
-        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <h2 className="text-xl font-semibold mb-2">🧠 AI分析結果</h2>
-          <p>{aiResult}</p>
+      <button
+        onClick={handleAnalyze}
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      >
+        AI分析を実行
+      </button>
+
+      {loading && (
+        <div className="mt-4">
+          <p>分析中...しばらくお待ちください</p>
+          <progress className="w-full" />
         </div>
       )}
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-2">📊 データ可視化</h2>
-        <Plot
-          data={[
-            {
-              x: data.map(d => d.name),
-              y: data.map(d => d.value),
-              type: 'bar',
-              marker: { color: 'orange' },
-            }
-          ]}
-          layout={{ width: 600, height: 400, title: '売上比較' }}
-        />
-      </div>
+      {result && (
+        <div className="mt-4 p-4 border rounded bg-gray-50">
+          <h2 className="font-bold mb-2">分析結果</h2>
+          <pre>{result}</pre>
+        </div>
+      )}
     </div>
   );
 }
-
