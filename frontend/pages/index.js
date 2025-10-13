@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
-import React from "react";
+import React, { useState } from "react"; // ← useStateを追加
+
 
 // SSR無効化でPlotlyを読み込む
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
