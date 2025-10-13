@@ -1,6 +1,33 @@
 import { useEffect, useState } from "react";
 import Plot from "react-plotly.js";
 
+import dynamic from "next/dynamic";
+import React from "react";
+
+// Plotly は SSR では動かないので dynamic import
+const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
+
+export default function Home() {
+  return (
+    <div>
+      <h1>サンプルグラフ</h1>
+      <Plot
+        data={[
+          {
+            x: [1, 2, 3, 4],
+            y: [10, 15, 13, 17],
+            type: "scatter",
+            mode: "lines+markers",
+            marker: { color: "red" },
+          },
+        ]}
+        layout={{ width: 600, height: 400, title: "基本折れ線グラフ" }}
+      />
+    </div>
+  );
+}
+
+
 export default function Home() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
