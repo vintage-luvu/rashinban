@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import React from "react";
 
+// SSR無効化でPlotlyを読み込む
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 export default function Home() {
