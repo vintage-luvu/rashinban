@@ -21,3 +21,8 @@ async def analyze(file: UploadFile = File(...)):
         messages=[{"role": "user", "content": prompt}]
     )
     return {"result": response.choices[0].message.content}
+
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
