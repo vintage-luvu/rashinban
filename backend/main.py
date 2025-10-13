@@ -5,9 +5,8 @@ import pandas as pd
 app = FastAPI()
 
 @app.get("/")
-def read_root():
-    return {"message": "🚀 FastAPI backend is running"}
-
+def root():
+    return {"message": "Backend is running!"}
 
 if __name__ == "__main__":
     import os
