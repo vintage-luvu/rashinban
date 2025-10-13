@@ -1,7 +1,8 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
+from io import StringIO
 
 app = FastAPI()
 
@@ -13,14 +14,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/data")
-def get_data():
-    # サンプルデータを返す
-    return [{"x": 1, "y": 2}, {"x": 2, "y": 3}, {"x": 3, "y": 5}]
 
-
-
-
+@app.post("/upload-csv")
+async def upload_csv(file: UploadFile = File(...)):
+    contents = await file.read()
+    df = pd.read_csv(StringIO(contents.decode("utf-8")))
+    # 数値列のみ返す
+    numeric_df = df.select_dtypes(include=["int64", "float64"])
+    return numeric_df.to_dict(orient="list")
 
 
 
