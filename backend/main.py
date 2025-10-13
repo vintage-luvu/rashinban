@@ -1,7 +1,5 @@
 from fastapi import FastAPI
 import pandas as pd
-from openai import OpenAI
-import os
 
 app = FastAPI()
 
