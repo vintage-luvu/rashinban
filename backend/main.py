@@ -14,6 +14,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def read_root():
+    return {"message": "CSV upload API is running! Use POST /upload-csv"}
 
 @app.post("/upload-csv")
 async def upload_csv(file: UploadFile = File(...)):
