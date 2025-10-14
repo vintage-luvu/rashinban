@@ -14,7 +14,7 @@ export default function Home() {
     formData.append("file", file);
 
     // FastAPIに送信
-    const res = await fetch("http://localhost:8000/upload-csv", {
+    const res = await fetch("https://rashin.onrender.com//upload-csv", {
       method: "POST",
       body: formData,
     });
