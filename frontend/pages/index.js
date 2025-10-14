@@ -54,29 +54,39 @@ export default function Home() {
     : [];
 
   return (
-    <div style={{ padding: "2rem", textAlign: "center" }}>
-      <h1>📊 CSVアップロードでグラフ化</h1>
-      <p>数値データを含むCSVをアップロードしてみよう！</p>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10">
+      <h1 className="text-4xl font-bold text-indigo-600 mb-6">📊 CSV可視化アプリ</h1>
 
-      <input
-        type="file"
-        accept=".csv"
-        onChange={handleFileChange}
-        style={{ margin: "1rem" }}
-      />
+      <div className="bg-white p-6 rounded-2xl shadow-md w-96 text-center">
+        <p className="text-gray-600 mb-4">CSVファイルをアップロードしてグラフを表示します</p>
 
-      {loading && <p>読み込み中です...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        <input
+          type="file"
+          accept=".csv"
+          onChange={handleFileChange}
+          className="block w-full text-sm text-gray-500
+                     file:mr-4 file:py-2 file:px-4
+                     file:rounded-full file:border-0
+                     file:text-sm file:font-semibold
+                     file:bg-indigo-50 file:text-indigo-600
+                     hover:file:bg-indigo-100"
+        />
+
+        {loading && <p className="text-blue-500 mt-4">📡 分析中...</p>}
+      </div>
 
       {plotData.length > 0 && (
-        <Plot
-          data={plotData}
-          layout={{
-            width: 800,
-            height: 600,
-            title: "アップロードしたCSVのグラフ",
-          }}
-        />
+        <div className="mt-10">
+          <Plot
+            data={plotData}
+            layout={{
+              width: 800,
+              height: 500,
+              title: "CSVグラフ",
+              paper_bgcolor: "#f9fafb",
+            }}
+          />
+        </div>
       )}
     </div>
   );
