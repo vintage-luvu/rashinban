@@ -48,36 +48,42 @@ export default function Home() {
         type: "scatter",
         mode: "lines+markers",
         name: col,
+        marker: {
+          size: 6,
+        },
+        line: {
+          width: 3,
+        },
       }))
     : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex flex-col items-center justify-center py-10 px-4">
+    <div className="app-container">
       {/* タイトル部分 */}
       <h1
-        className="text-6xl sm:text-7xl font-extrabold text-center mb-6 
-        bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-400 
-        bg-clip-text text-transparent opacity-0 animate-fadeIn drop-shadow-lg"
+        className="hero-title animate-fadeIn"
         style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}
       >
         羅針盤 📊
       </h1>
 
       <p
-        className="text-gray-600 text-center mb-10 max-w-2xl text-lg leading-relaxed opacity-0 animate-fadeIn"
+        className="hero-subtitle animate-fadeIn"
         style={{ animationDelay: "1s", animationFillMode: "forwards" }}
       >
         データをドラッグ＆ドロップするだけで、瞬時にグラフを作成できます。
         <br />
-        <span className="font-semibold text-indigo-500">
+        <span>
           直感的に使える、AI時代のデータ分析ツールです。
         </span>
       </p>
 
       {/* アップロードUI */}
-      <div className="bg-white p-8 rounded-3xl shadow-xl w-96 text-center transform transition hover:scale-105 opacity-0 animate-fadeIn"
-        style={{ animationDelay: "1.8s", animationFillMode: "forwards" }}>
-        <p className="text-gray-600 mb-4 font-medium">
+      <div
+        className="upload-card animate-fadeIn"
+        style={{ animationDelay: "1.8s", animationFillMode: "forwards" }}
+      >
+        <p className="upload-instruction">
           CSVファイルをアップロードしてください
         </p>
 
@@ -85,31 +91,36 @@ export default function Home() {
           type="file"
           accept=".csv"
           onChange={handleFileChange}
-          className="block w-full text-sm text-gray-500
-                     file:mr-4 file:py-2 file:px-4
-                     file:rounded-full file:border-0
-                     file:text-sm file:font-semibold
-                     file:bg-indigo-50 file:text-indigo-600
-                     hover:file:bg-indigo-100 cursor-pointer"
+          className="file-input"
         />
 
-        {loading && <p className="text-blue-500 mt-4 animate-pulse">📡 分析中...</p>}
-        {error && <p className="text-red-500 mt-4">{error}</p>}
+        {loading && (
+          <p className="loading-message">📡 分析中...</p>
+        )}
+        {error && <p className="error-message">{error}</p>}
       </div>
 
       {/* グラフ表示 */}
       {plotData.length > 0 && (
-        <div className="mt-12 opacity-0 animate-fadeIn"
-          style={{ animationDelay: "2.5s", animationFillMode: "forwards" }}>
+        <div
+          className="chart-wrapper animate-fadeIn"
+          style={{ animationDelay: "2.5s", animationFillMode: "forwards" }}
+        >
           <Plot
             data={plotData}
             layout={{
-              width: 800,
-              height: 500,
+              autosize: true,
               title: "📈 アップロードしたCSVの可視化結果",
-              paper_bgcolor: "#f9fafb",
-              plot_bgcolor: "#f9fafb",
+              paper_bgcolor: "rgba(248, 250, 252, 0.85)",
+              plot_bgcolor: "rgba(248, 250, 252, 0.85)",
+              font: {
+                family: "'Noto Sans JP', 'Inter', system-ui",
+              },
+              margin: { l: 50, r: 30, t: 80, b: 50 },
             }}
+            config={{ responsive: true, displaylogo: false }}
+            useResizeHandler
+            style={{ width: "100%", height: "100%" }}
           />
         </div>
       )}
