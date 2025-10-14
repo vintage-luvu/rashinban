@@ -49,15 +49,21 @@ export default function Home() {
     : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex flex-col items-center py-10 px-4">
-      <h1 className="text-5xl font-extrabold text-indigo-700 mb-6 text-center tracking-tight">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex flex-col items-center justify-center py-10 px-4">
+      {/* タイトル */}
+      <h1 className="text-6xl sm:text-7xl font-extrabold text-center mb-6 bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-400 bg-clip-text text-transparent animate-pulse drop-shadow-lg">
         羅針盤 📊
       </h1>
-      <p className="text-gray-600 text-center mb-10 max-w-lg">
+
+      {/* サブタイトル */}
+      <p className="text-gray-600 text-center mb-10 max-w-2xl text-lg leading-relaxed">
         データをドラッグ＆ドロップするだけで、瞬時にグラフを作成できます。
         <br />
-        直感的に使える、AI時代のデータ分析ツールです。
+        <span className="font-semibold text-indigo-500">
+          直感的に使える、AI時代のデータ分析ツールです。
+        </span>
       </p>
+</div>
 
       {/* アップロードエリア */}
       <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-md p-8 text-center hover:shadow-lg transition-all">
