@@ -48,6 +48,12 @@ export default function Home() {
         type: "scatter",
         mode: "lines+markers",
         name: col,
+        marker: {
+          size: 6,
+        },
+        line: {
+          width: 3,
+        },
       }))
     : [];
 
