@@ -3,6 +3,7 @@ from fastapi import FastAPI, UploadFile, File
 import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
 from io import StringIO
+import uvicorn
 
 app = FastAPI()
 
