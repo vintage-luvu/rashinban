@@ -22,10 +22,11 @@ export default function Home() {
 
     try {
       // Render上のFastAPIに送信！
-      const res = await fetch("https://rashin.onrender.com/upload-csv", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload-csv`, {
         method: "POST",
         body: formData,
       });
+
 
       if (!res.ok) {
         throw new Error("サーバーエラーが発生しました。");
