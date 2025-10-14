@@ -9,6 +9,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+
+  <div className="h-6 w-full bg-red-500" />
+
   // CSVアップロード処理
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
