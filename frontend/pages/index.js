@@ -67,7 +67,7 @@ export default function Home() {
         className="hero-title animate-fadeIn"
         style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}
       >
-        羅針盤 📊
+        羅針盤 
       </h1>
 
       <p
