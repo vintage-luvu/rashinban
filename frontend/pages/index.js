@@ -55,11 +55,10 @@ export default function Home() {
     }
   };
   
-
-  // 数値列のみを取得
-  const numericColumns = data ? Object.keys(data) : [];
-  const hasUploadedData = data !== null;
-  const rowCount = numericColumns.reduce((max, column) => {
+  // データ列を取得
+  const columns = data ? Object.keys(data) : [];
+  const hasUploadedData = data !== null && columns.length > 0;
+  const rowCount = columns.reduce((max, column) => {
     const values = data[column];
     if (!Array.isArray(values)) {
       return max;
@@ -71,8 +70,17 @@ export default function Home() {
     () => new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 3 }),
     []
   );
+  const percentFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("ja-JP", {
+        style: "percent",
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }),
+    []
+  );
 
-  const columnSummaries = numericColumns.map((column) => {
+  const columnSummaries = columns.map((column) => {
     const rawValues = Array.isArray(data[column]) ? data[column] : [];
     const numericValues = rawValues.filter(
       (value) => typeof value === "number" && Number.isFinite(value)
@@ -112,7 +120,7 @@ export default function Home() {
     };
   });
 
-  const totalNumericValues = columnSummaries.reduce(
+  const totalValidValues = columnSummaries.reduce(
     (sum, summary) => sum + summary.count - summary.missing,
     0
   );
@@ -124,11 +132,51 @@ export default function Home() {
 
     return numberFormatter.format(value);
   };
+
+  const missingSummaries = columns.map((column) => {
+    const rawValues = Array.isArray(data[column]) ? data[column] : [];
+    const total = rawValues.length;
+    const missing = rawValues.filter(
+      (value) =>
+        value === null ||
+        value === undefined ||
+        value === "" ||
+        (typeof value === "number" && Number.isNaN(value))
+    ).length;
+
+    return {
+      name: column,
+      total,
+      missing,
+      rate: total === 0 ? 0 : missing / total,
+    };
+  });
+
+  const previewRows = Array.from({ length: Math.min(rowCount, 10) }, (_, index) => {
+    const row = { index: index + 1 };
+    columns.forEach((column) => {
+      const rawValues = Array.isArray(data[column]) ? data[column] : [];
+      const value = rawValues[index];
+      row[column] =
+        value === null || value === undefined || value === ""
+          ? "―"
+          : value;
+    });
+    return row;
+  });
   // Plotlyデータ変換
-  const plotData = numericColumns.length > 0
-    ? numericColumns.map((col) => ({
-        x: data[col].map((_, i) => i),
-        y: data[col],
+  const numericPlotColumns = columns.filter((column) => {
+    const rawValues = Array.isArray(data[column]) ? data[column] : [];
+    return rawValues.some(
+      (value) => typeof value === "number" && Number.isFinite(value)
+    );
+  });
+  const plotData = numericPlotColumns.length > 0
+    ? numericPlotColumns.map((col) => ({
+        x: (Array.isArray(data[col]) ? data[col] : []).map((_, i) => i),
+        y: (Array.isArray(data[col]) ? data[col] : []).map((value) =>
+          typeof value === "number" && Number.isFinite(value) ? value : null
+        ),
         type: "scatter",
         mode: "lines+markers",
         name: col,
@@ -226,11 +274,11 @@ export default function Home() {
               データサマリー
             </h2>
             <span className="text-sm text-slate-500">
-              {numericColumns.length > 0
-                ? `${rowCount.toLocaleString("ja-JP")}行 × ${numericColumns
+              {columns.length > 0
+                ? `${rowCount.toLocaleString("ja-JP")}行 × ${columns
                     .length
                     .toLocaleString("ja-JP")}列`
-                : "数値列が見つかりません"}
+                : "列が見つかりません"}
             </span>
           </div>
 
@@ -241,7 +289,7 @@ export default function Home() {
                   行数
                 </p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">
-                  {numericColumns.length > 0
+                  {columns.length > 0
                     ? rowCount.toLocaleString("ja-JP")
                     : "―"}
                 </p>
@@ -251,7 +299,7 @@ export default function Home() {
                   列数
                 </p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">
-                  {numericColumns.length.toLocaleString("ja-JP")}
+                  {columns.length.toLocaleString("ja-JP")}
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white/70 p-4">
@@ -259,7 +307,7 @@ export default function Home() {
                   有効データ数
                 </p>
                 <p className="mt-2 text-lg font-semibold text-slate-900">
-                  {numberFormatter.format(totalNumericValues)}
+                  {numberFormatter.format(totalValidValues)}
                 </p>
               </div>
             </div>
@@ -269,8 +317,8 @@ export default function Home() {
                 列情報
               </h3>
               <div className="mt-2 flex flex-wrap gap-2">
-                {numericColumns.length > 0 ? (
-                  numericColumns.map((column) => (
+                {columns.length > 0 ? (
+                  columns.map((column) => (
                     <span
                       key={column}
                       className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-700"
@@ -280,10 +328,48 @@ export default function Home() {
                   ))
                 ) : (
                   <p className="text-sm text-slate-500">
-                    数値列が見つかりませんでした。
+                    列が見つかりませんでした。
                   </p>
                 )}
               </div>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                欠損値
+              </h3>
+              {missingSummaries.length > 0 ? (
+                <div className="mt-2 overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                    <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-3 py-2">列名</th>
+                        <th className="px-3 py-2">欠損値</th>
+                        <th className="px-3 py-2">割合</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white/60">
+                      {missingSummaries.map((summary) => (
+                        <tr key={summary.name}>
+                          <td className="px-3 py-2 font-medium text-slate-800">
+                            {summary.name}
+                          </td>
+                          <td className="px-3 py-2 text-slate-700">
+                            {summary.missing.toLocaleString("ja-JP")} / {summary.total.toLocaleString("ja-JP")}
+                          </td>
+                          <td className="px-3 py-2 text-slate-700">
+                            {percentFormatter.format(summary.rate)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-slate-500">
+                  欠損値を計算できる列がありません。
+                </p>
+              )}
             </div>
 
             <div>
@@ -339,6 +425,42 @@ export default function Home() {
                 </p>
               )}
             </div>
+
+            {previewRows.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  先頭10件プレビュー
+                </h3>
+                <div className="mt-2 overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                    <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-3 py-2">#</th>
+                        {columns.map((column) => (
+                          <th key={column} className="px-3 py-2">
+                            {column}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white/60">
+                      {previewRows.map((row) => (
+                        <tr key={row.index}>
+                          <td className="px-3 py-2 font-medium text-slate-800">
+                            {row.index}
+                          </td>
+                          {columns.map((column) => (
+                            <td key={column} className="px-3 py-2 text-slate-700">
+                              {row[column]}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       )}
