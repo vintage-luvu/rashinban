@@ -1,5 +1,7 @@
 import dynamic from "next/dynamic";
 import React, { useState } from "react";
+import AxisSelector from '../components/AxisSelector';
+import { createScatterPlot, createLayout } from '../utils/graphUtils';
 
 // SSR無効化でPlotlyを読み込む
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -8,6 +10,8 @@ export default function Home() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [xAxis, setXAxis] = useState("");
+  const [yAxis, setYAxis] = useState("");
 
 
   <div className="h-6 w-full bg-red-500" />
@@ -42,6 +46,15 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  const handleAxisChange = (axis, value) => {
+    if (axis === 'x') {
+        setXAxis(value);
+    } else {
+      setYAxis(value);
+    }
+  };
+  
 
   // Plotlyデータ変換
   const plotData = data
