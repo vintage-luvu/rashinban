@@ -105,7 +105,7 @@ export default function Home() {
       {/* ★ 公式サイトリンク（タイトル直下） */}
       <div className="mt-2">
         <a
-          href="https://your-official-site.example.com"      // ← 公式URLに差し替え
+          href="https://leg-nagasaki-kickoff.my.canva.site/rashin"      // ← 公式URLに差し替え
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-blue-600 hover:underline"
