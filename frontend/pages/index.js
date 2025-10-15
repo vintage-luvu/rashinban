@@ -215,7 +215,6 @@ export default function Home() {
       >
         羅針盤 
       </h1>
-      
       {/* ★ 公式サイトリンク（タイトル直下） */}
       <div className="mt-2">
         <a
@@ -227,17 +226,20 @@ export default function Home() {
         >
           詳細を学ぶ <span aria-hidden>↗</span>
         </a>
-      </div>
+      </div> 
+
       <p
         className="hero-subtitle animate-fadeIn"
         style={{ animationDelay: "1s", animationFillMode: "forwards" }}
       >
-        データをドラッグ＆ドロップするだけで、瞬時にグラフを作成できます。
+        羅針盤は、誰でも超簡単に使える一流データアナリストです。
         <br />
         <span>
-          直感的に使える、AI時代のデータ分析ツールです。
+          もっと知りたいですか？
         </span>
       </p>
+
+
 
       {/* アップロードUI */}
       <div
@@ -245,7 +247,7 @@ export default function Home() {
         style={{ animationDelay: "1.8s", animationFillMode: "forwards" }}
       >
         <p className="upload-instruction">
-          CSVファイルをアップロードしてください
+          CSVファイルをアップロードで自動分析
         </p>
 
         <input
