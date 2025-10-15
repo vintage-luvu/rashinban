@@ -11,6 +11,13 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authToken, setAuthToken] = useState("");
+  const [loggedInUser, setLoggedInUser] = useState("");
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState("");
   const [aiSummaryError, setAiSummaryError] = useState("");
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
@@ -22,10 +29,113 @@ export default function Home() {
   const summarySectionRef = useRef(null);
   const previousAiSummaryLoading = useRef(false);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedToken = window.localStorage.getItem("authToken") ?? "";
+    const storedUsername = window.localStorage.getItem("authUsername") ?? "";
+
+    if (storedToken) {
+      setAuthToken(storedToken);
+      setIsAuthenticated(true);
+    }
+
+    if (storedUsername) {
+      setLoggedInUser(storedUsername);
+      setLoginUsername(storedUsername);
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      if (authToken) {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/logout`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAuthenticated(false);
+      setAuthToken("");
+      setLoggedInUser("");
+      setLoginPassword("");
+      setData(null);
+      setSuccess("");
+      setError("");
+
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("authToken");
+        window.localStorage.removeItem("authUsername");
+      }
+    }
+  };
+
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault();
+    if (loginLoading) {
+      return;
+    }
+
+    setLoginError("");
+    setLoginLoading(true);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: loginUsername,
+          password: loginPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("認証に失敗しました。");
+      }
+
+      const result = await response.json().catch(() => null);
+
+      if (!result || typeof result.access_token !== "string") {
+        throw new Error("認証に失敗しました。");
+      }
+
+      setAuthToken(result.access_token);
+      setIsAuthenticated(true);
+      setLoggedInUser(loginUsername);
+      setLoginPassword("");
+      setLoginError("");
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("authToken", result.access_token);
+        window.localStorage.setItem("authUsername", loginUsername);
+      }
+    } catch (err) {
+      console.error(err);
+      setLoginError(
+        "ログインに失敗しました。ユーザー名とパスワードを確認してください。"
+      );
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
   // CSVアップロード処理
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (!isAuthenticated || !authToken) {
+      setError("ファイルをアップロードするにはログインが必要です。");
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -38,9 +148,17 @@ export default function Home() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload-csv`, {
         method: "POST",
         body: formData,
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          await handleLogout();
+          throw new Error("認証エラーが発生しました。再度ログインしてください。");
+        }
+
         throw new Error("サーバーエラーが発生しました。");
       }
 
@@ -49,7 +167,11 @@ export default function Home() {
       setSuccess("いい調子！ファイルの読み込みに成功。");
     } catch (err) {
       console.error(err);
-      setError("アップロード中に問題が発生しました。");
+      const message =
+        err instanceof Error && typeof err.message === "string"
+          ? err.message
+          : "アップロード中に問題が発生しました。";
+      setError(message);
       setSuccess("");
     } finally {
       setLoading(false);
@@ -361,8 +483,93 @@ export default function Home() {
     });
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="login-page">
+        <div className="login-orb login-orb--left" aria-hidden />
+        <div className="login-orb login-orb--right" aria-hidden />
+        <div className="login-container">
+          <section className="login-hero">
+            <span className="login-badge">ようこそ</span>
+            <h1 className="login-title">羅針盤にログイン</h1>
+            <p className="login-description">
+              CSV アップロード機能を利用するにはログインが必要です。
+              デフォルトの資格情報は管理者にお問い合わせください。
+            </p>
+          </section>
+          <form className="login-card" onSubmit={handleLoginSubmit}>
+            <div className="form-field">
+              <label htmlFor="username" className="form-label">
+                ユーザー名
+              </label>
+              <div className="input-wrapper">
+                <input
+                  id="username"
+                  type="text"
+                  value={loginUsername}
+                  onChange={(event) => setLoginUsername(event.target.value)}
+                  autoComplete="username"
+                  className="login-input"
+                  placeholder="ユーザー名を入力"
+                  required
+                />
+              </div>
+            </div>
+            <div className="form-field">
+              <label htmlFor="password" className="form-label">
+                パスワード
+              </label>
+              <div className="input-wrapper">
+                <input
+                  id="password"
+                  type="password"
+                  value={loginPassword}
+                  onChange={(event) => setLoginPassword(event.target.value)}
+                  autoComplete="current-password"
+                  className="login-input"
+                  placeholder="パスワードを入力"
+                  required
+                />
+              </div>
+            </div>
+            {loginError && (
+              <p className="form-error" role="alert">
+                {loginError}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={loginLoading}
+              className={`login-button ${loginLoading ? "is-loading" : ""}`}
+            >
+              {loginLoading ? "航路を確認中..." : "ログイン"}
+            </button>
+            <p className="login-support">
+              サポートが必要な場合は、システム管理者までお問い合わせください。
+            </p>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
+      <div className="flex w-full max-w-6xl items-center justify-end gap-4 self-end">
+        <p className="text-sm text-gray-600">
+          ログイン中:
+          <span className="ml-1 font-medium text-gray-900">
+            {loggedInUser || "ユーザー"}
+          </span>
+        </p>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="rounded-lg border border-transparent bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 transition hover:bg-gray-300"
+        >
+          ログアウト
+        </button>
+      </div>
       {/* タイトル部分 */}
       <h1
         className="hero-title animate-fadeIn"
