@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import AxisSelector from "../components/AxisSelector";
 import { createScatterPlot, createLayout } from "../utils/graphUtils";
 
@@ -10,7 +10,9 @@ export default function Home() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [aiSummary, setAiSummary] = useState("");
+  const [aiSummaryError, setAiSummaryError] = useState("");
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
   const [xAxis, setXAxis] = useState("");
   const [yAxis, setYAxis] = useState("");
   const plotRef = useRef(null);
@@ -52,24 +54,14 @@ export default function Home() {
   };
 
   const handleAxisChange = (axis, value) => {
-    if (axis === 'x') {
-        setXAxis(value);
+    if (axis === "x") {
+      setXAxis(value);
     } else {
       setYAxis(value);
     }
   };
   
   // データ列を取得
-  const columns = data ? Object.keys(data) : [];
-  const hasUploadedData = data !== null && columns.length > 0;
-  const rowCount = columns.reduce((max, column) => {
-    const values = data[column];
-    if (!Array.isArray(values)) {
-      return max;
-    }
-    return Math.max(max, values.length);
-  }, 0);
-
   const numberFormatter = useMemo(
     () => new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 3 }),
     []
@@ -84,50 +76,248 @@ export default function Home() {
     []
   );
 
-  const columnSummaries = columns.map((column) => {
-    const rawValues = Array.isArray(data[column]) ? data[column] : [];
-    const numericValues = rawValues.filter(
-      (value) => typeof value === "number" && Number.isFinite(value)
-    );
-    if (numericValues.length === 0) {
+  const columns = useMemo(() => (data ? Object.keys(data) : []), [data]);
+  const hasUploadedData = columns.length > 0;
+
+  const rowCount = useMemo(() => {
+    return columns.reduce((max, column) => {
+      const values = Array.isArray(data?.[column]) ? data[column] : [];
+      return Math.max(max, values.length);
+    }, 0);
+  }, [columns, data]);
+
+  const columnSummaries = useMemo(() => {
+    return columns.map((column) => {
+      const rawValues = Array.isArray(data?.[column]) ? data[column] : [];
+      const numericValues = rawValues.filter(
+        (value) => typeof value === "number" && Number.isFinite(value)
+      );
+
+      if (numericValues.length === 0) {
+        return {
+          name: column,
+          count: rawValues.length,
+          missing: rawValues.length,
+          min: null,
+          max: null,
+          mean: null,
+          median: null,
+        };
+      }
+
+      const sorted = [...numericValues].sort((a, b) => a - b);
+      const min = sorted[0];
+      const max = sorted[sorted.length - 1];
+      const mean =
+        numericValues.reduce((accumulator, value) => accumulator + value, 0) /
+        numericValues.length;
+      const middleIndex = Math.floor(sorted.length / 2);
+      const median =
+        sorted.length % 2 === 0
+          ? (sorted[middleIndex - 1] + sorted[middleIndex]) / 2
+          : sorted[middleIndex];
+
       return {
         name: column,
         count: rawValues.length,
-        missing: rawValues.length,
-        min: null,
-        max: null,
-        mean: null,
-        median: null,
+        missing: rawValues.length - numericValues.length,
+        min,
+        max,
+        mean,
+        median,
       };
+    });
+  }, [columns, data]);
+
+  const totalValidValues = useMemo(
+    () =>
+      columnSummaries.reduce(
+        (sum, summary) => sum + summary.count - summary.missing,
+        0
+      ),
+    [columnSummaries]
+  );
+
+  const missingSummaries = useMemo(
+    () =>
+      columns.map((column) => {
+        const rawValues = Array.isArray(data?.[column]) ? data[column] : [];
+        const total = rawValues.length;
+        const missing = rawValues.filter(
+          (value) =>
+            value === null ||
+            value === undefined ||
+            value === "" ||
+            (typeof value === "number" && Number.isNaN(value))
+        ).length;
+
+        return {
+          name: column,
+          total,
+          missing,
+          rate: total === 0 ? 0 : missing / total,
+        };
+      }),
+    [columns, data]
+  );
+
+  const previewRows = useMemo(() => {
+    return Array.from({ length: Math.min(rowCount, 10) }, (_, index) => {
+      const row = { index: index + 1 };
+      columns.forEach((column) => {
+        const rawValues = Array.isArray(data?.[column]) ? data[column] : [];
+        const value = rawValues[index];
+        row[column] =
+          value === null || value === undefined || value === ""
+            ? "―"
+            : value;
+      });
+      return row;
+    });
+  }, [rowCount, columns, data]);
+
+  // Plotlyデータ変換
+  const numericPlotColumns = useMemo(
+    () =>
+      columns.filter((column) => {
+        const rawValues = Array.isArray(data?.[column]) ? data[column] : [];
+        return rawValues.some(
+          (value) => typeof value === "number" && Number.isFinite(value)
+        );
+      }),
+    [columns, data]
+  );
+
+  const plotData = useMemo(() => {
+    if (numericPlotColumns.length === 0) {
+      return [];
     }
 
-    const sorted = [...numericValues].sort((a, b) => a - b);
-    const min = sorted[0];
-    const max = sorted[sorted.length - 1];
-    const mean =
-      numericValues.reduce((accumulator, value) => accumulator + value, 0) /
-      numericValues.length;
-    const middleIndex = Math.floor(sorted.length / 2);
-    const median =
-      sorted.length % 2 === 0
-        ? (sorted[middleIndex - 1] + sorted[middleIndex]) / 2
-        : sorted[middleIndex];
+    return numericPlotColumns.map((column) => {
+      const rawValues = Array.isArray(data?.[column]) ? data[column] : [];
+      return {
+        x: rawValues.map((_, index) => index),
+        y: rawValues.map((value) =>
+          typeof value === "number" && Number.isFinite(value) ? value : null
+        ),
+        type: "scatter",
+        mode: "lines+markers",
+        name: column,
+        marker: {
+          size: 6,
+        },
+        line: {
+          width: 3,
+        },
+      };
+    });
+  }, [numericPlotColumns, data]);
+
+  const datasetSummaryInput = useMemo(() => {
+    if (!hasUploadedData) {
+      return null;
+    }
 
     return {
-      name: column,
-      count: rawValues.length,
-      missing: rawValues.length - numericValues.length,
-      min,
-      max,
-      mean,
-      median,
+      columns,
+      rowCount,
+      columnSummaries,
+      missingSummaries,
+      previewRows,
+      totalValidValues,
     };
-  });
+  }, [
+    hasUploadedData,
+    columns,
+    rowCount,
+    columnSummaries,
+    missingSummaries,
+    previewRows,
+    totalValidValues,
+  ]);
 
-  const totalValidValues = columnSummaries.reduce(
-    (sum, summary) => sum + summary.count - summary.missing,
-    0
-  );
+  useEffect(() => {
+    if (!datasetSummaryInput) {
+      setAiSummary("");
+      setAiSummaryError("");
+      setAiSummaryLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const fetchSummary = async () => {
+      setAiSummary("");
+      setAiSummaryError("");
+      setAiSummaryLoading(true);
+
+      try {
+        const response = await fetch("/api/summarize", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            columns: datasetSummaryInput.columns,
+            rowCount: datasetSummaryInput.rowCount,
+            columnSummaries: datasetSummaryInput.columnSummaries,
+            missingSummaries: datasetSummaryInput.missingSummaries,
+            previewRows: datasetSummaryInput.previewRows.slice(0, 5),
+            totalValidValues: datasetSummaryInput.totalValidValues,
+          }),
+          signal: controller.signal,
+        });
+
+        const result = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          const message =
+            result && typeof result.message === "string"
+              ? result.message
+              : "AI要約の生成に失敗しました。";
+          throw new Error(message);
+        }
+
+        if (
+          result &&
+          typeof result.summary === "string" &&
+          result.summary.trim().length > 0
+        ) {
+          setAiSummary(result.summary.trim());
+        } else {
+          setAiSummaryError("AI要約を取得できませんでした。");
+        }
+      } catch (err) {
+        const isAbortError =
+          typeof err === "object" &&
+          err !== null &&
+          "name" in err &&
+          err.name === "AbortError";
+
+        if (isAbortError) {
+          return;
+        }
+
+        console.error(err);
+        const fallbackMessage =
+          typeof err === "object" &&
+          err !== null &&
+          "message" in err &&
+          typeof err.message === "string"
+            ? err.message
+            : "AI要約の生成に失敗しました。";
+        setAiSummaryError(fallbackMessage);
+      } finally {
+        setAiSummaryLoading(false);
+      }
+    };
+
+    fetchSummary();
+
+    return () => {
+      controller.abort();
+    };
+  }, [datasetSummaryInput]);
 
   const formatNumber = (value) => {
     if (typeof value !== "number" || Number.isNaN(value)) {
@@ -136,64 +326,7 @@ export default function Home() {
 
     return numberFormatter.format(value);
   };
-
-  const missingSummaries = columns.map((column) => {
-    const rawValues = Array.isArray(data[column]) ? data[column] : [];
-    const total = rawValues.length;
-    const missing = rawValues.filter(
-      (value) =>
-        value === null ||
-        value === undefined ||
-        value === "" ||
-        (typeof value === "number" && Number.isNaN(value))
-    ).length;
-
-    return {
-      name: column,
-      total,
-      missing,
-      rate: total === 0 ? 0 : missing / total,
-    };
-  });
-
-  const previewRows = Array.from({ length: Math.min(rowCount, 10) }, (_, index) => {
-    const row = { index: index + 1 };
-    columns.forEach((column) => {
-      const rawValues = Array.isArray(data[column]) ? data[column] : [];
-      const value = rawValues[index];
-      row[column] =
-        value === null || value === undefined || value === ""
-          ? "―"
-          : value;
-    });
-    return row;
-  });
-  // Plotlyデータ変換
-  const numericPlotColumns = columns.filter((column) => {
-    const rawValues = Array.isArray(data[column]) ? data[column] : [];
-    return rawValues.some(
-      (value) => typeof value === "number" && Number.isFinite(value)
-    );
-  });
-  const plotData = numericPlotColumns.length > 0
-    ? numericPlotColumns.map((col) => ({
-        x: (Array.isArray(data[col]) ? data[col] : []).map((_, i) => i),
-        y: (Array.isArray(data[col]) ? data[col] : []).map((value) =>
-          typeof value === "number" && Number.isFinite(value) ? value : null
-        ),
-        type: "scatter",
-        mode: "lines+markers",
-        name: col,
-        marker: {
-          size: 6,
-        },
-        line: {
-          width: 3,
-        },
-      }))
-    : [];
-
-    // ★ 画像保存（PNG）ボタン用ハンドラ
+  // ★ 画像保存（PNG）ボタン用ハンドラ
   const handleDownloadPng = async () => {
     const gd = plotRef.current?.el; // react-plotly のグラフDOM
     if (!gd) return;
@@ -222,7 +355,7 @@ export default function Home() {
       {/* ★ 公式サイトリンク（タイトル直下） */}
       <div className="mt-2">
         <a
-          href="https://leg-nagasaki-kickoff.my.canva.site/rashin"      // ← 公式URLに差し替え
+          href="https://leg-nagasaki-kickoff.my.canva.site/rashin"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-blue-600 hover:underline"
@@ -288,6 +421,26 @@ export default function Home() {
           </div>
 
           <div className="space-y-4">
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                AI要約
+              </h3>
+              {aiSummaryLoading ? (
+                <p className="mt-2 text-sm text-indigo-700">
+                  🧠 要約を生成しています...
+                </p>
+              ) : aiSummaryError ? (
+                <p className="mt-2 text-sm text-rose-600">{aiSummaryError}</p>
+              ) : aiSummary ? (
+                <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+                  {aiSummary}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-slate-500">
+                  要約を表示する準備が整うとここに表示されます。
+                </p>
+              )}
+            </div>
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               <div className="rounded-xl border border-slate-200 bg-white/70 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
