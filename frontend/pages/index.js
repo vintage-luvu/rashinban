@@ -12,6 +12,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isBypassMode, setIsBypassMode] = useState(false);
   const [authToken, setAuthToken] = useState("");
   const [loggedInUser, setLoggedInUser] = useState("");
   const [loginUsername, setLoginUsername] = useState("");
@@ -34,6 +35,7 @@ export default function Home() {
       return;
     }
 
+    setIsBypassMode(false);
     const storedToken = window.localStorage.getItem("authToken") ?? "";
     const storedUsername = window.localStorage.getItem("authUsername") ?? "";
 
@@ -48,10 +50,17 @@ export default function Home() {
     }
   }, []);
 
+  const backendBaseUrl = (
+    process.env.NEXT_PUBLIC_BACKEND_URL &&
+    process.env.NEXT_PUBLIC_BACKEND_URL.trim()
+      ? process.env.NEXT_PUBLIC_BACKEND_URL.trim()
+      : "http://localhost:8000"
+  ).replace(/\/+$/, "");
+
   const handleLogout = async () => {
     try {
       if (authToken) {
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/logout`, {
+        await fetch(`${backendBaseUrl}/logout`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -62,6 +71,7 @@ export default function Home() {
       console.error(err);
     } finally {
       setIsAuthenticated(false);
+      setIsBypassMode(false);
       setAuthToken("");
       setLoggedInUser("");
       setLoginPassword("");
@@ -76,6 +86,20 @@ export default function Home() {
     }
   };
 
+  const handleBypassLogin = () => {
+    setIsAuthenticated(true);
+    setIsBypassMode(true);
+    setAuthToken("");
+    setLoggedInUser("ゲストユーザー");
+    setLoginError("");
+    setLoginPassword("");
+
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("authToken");
+      window.localStorage.removeItem("authUsername");
+    }
+  };
+
   const handleLoginSubmit = async (event) => {
     event.preventDefault();
     if (loginLoading) {
@@ -86,7 +110,7 @@ export default function Home() {
     setLoginLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/login`, {
+      const response = await fetch(`${backendBaseUrl}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -109,6 +133,7 @@ export default function Home() {
 
       setAuthToken(result.access_token);
       setIsAuthenticated(true);
+      setIsBypassMode(false);
       setLoggedInUser(loginUsername);
       setLoginPassword("");
       setLoginError("");
@@ -132,7 +157,7 @@ export default function Home() {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!isAuthenticated || !authToken) {
+    if (!isAuthenticated || (!authToken && !isBypassMode)) {
       setError("ファイルをアップロードするにはログインが必要です。");
       return;
     }
@@ -145,18 +170,29 @@ export default function Home() {
 
     try {
       // Render上のFastAPIに送信
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload-csv`, {
+      const headers = {};
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      } else if (isBypassMode) {
+        headers["X-Bypass-Mode"] = "true";
+      }
+
+      const res = await fetch(`${backendBaseUrl}/upload-csv`, {
         method: "POST",
         body: formData,
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+        headers,
       });
 
       if (!res.ok) {
         if (res.status === 401) {
-          await handleLogout();
-          throw new Error("認証エラーが発生しました。再度ログインしてください。");
+          if (!isBypassMode) {
+            await handleLogout();
+            throw new Error("認証エラーが発生しました。再度ログインしてください。");
+          }
+
+          throw new Error(
+            "バイパスモードでリクエストが拒否されました。時間をおいて再度お試しください。"
+          );
         }
 
         throw new Error("サーバーエラーが発生しました。");
@@ -545,8 +581,18 @@ export default function Home() {
             >
               {loginLoading ? "航路を確認中..." : "ログイン"}
             </button>
+            <button
+              type="button"
+              className="login-button login-button--secondary"
+              onClick={handleBypassLogin}
+            >
+              一時的にログインをスキップ
+            </button>
             <p className="login-support">
               サポートが必要な場合は、システム管理者までお問い合わせください。
+            </p>
+            <p className="login-support text-xs">
+              ※ このボタンは暫定対応です。正式なログイン手段が復旧したら削除します。
             </p>
           </form>
         </div>
@@ -556,6 +602,11 @@ export default function Home() {
 
   return (
     <div className="app-container">
+      {isBypassMode && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          一時的なログインスキップモードで利用中です。すべての機能を利用できますが、取り扱いにはご注意ください。
+        </div>
+      )}
       <div className="flex w-full max-w-6xl items-center justify-end gap-4 self-end">
         <p className="text-sm text-gray-600">
           ログイン中:
