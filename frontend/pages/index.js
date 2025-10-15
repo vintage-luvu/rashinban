@@ -101,7 +101,18 @@ export default function Home() {
       >
         羅針盤 
       </h1>
-      
+      {/* ★ 公式サイトリンク（タイトル直下） */}
+      <div className="mt-2">
+        <a
+          href="https://leg-nagasaki-kickoff.my.canva.site/rashin"      // ← 公式URLに差し替え
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-blue-600 hover:underline"
+          aria-label="公式サイトを新しいタブで開く"
+        >
+          詳細を学ぶ <span aria-hidden>↗</span>
+        </a>
+      </div> 
 
       <p
         className="hero-subtitle animate-fadeIn"
@@ -114,18 +125,6 @@ export default function Home() {
         </span>
       </p>
 
-      {/* ★ 公式サイトリンク（タイトル直下） */}
-      <div className="mt-2">
-        <a
-          href="https://leg-nagasaki-kickoff.my.canva.site/rashin"      // ← 公式URLに差し替え
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-blue-600 hover:underline"
-          aria-label="公式サイトを新しいタブで開く"
-        >
-          詳細を学ぶ <span aria-hidden>↗</span>
-        </a>
-      </div>
 
 
       {/* アップロードUI */}
