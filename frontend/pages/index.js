@@ -48,10 +48,17 @@ export default function Home() {
     }
   }, []);
 
+  const backendBaseUrl = (
+    process.env.NEXT_PUBLIC_BACKEND_URL &&
+    process.env.NEXT_PUBLIC_BACKEND_URL.trim()
+      ? process.env.NEXT_PUBLIC_BACKEND_URL.trim()
+      : "http://localhost:8000"
+  ).replace(/\/+$/, "");
+
   const handleLogout = async () => {
     try {
       if (authToken) {
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/logout`, {
+        await fetch(`${backendBaseUrl}/logout`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -86,7 +93,7 @@ export default function Home() {
     setLoginLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/login`, {
+      const response = await fetch(`${backendBaseUrl}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -145,7 +152,7 @@ export default function Home() {
 
     try {
       // Render上のFastAPIに送信
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload-csv`, {
+      const res = await fetch(`${backendBaseUrl}/upload-csv`, {
         method: "POST",
         body: formData,
         headers: {
