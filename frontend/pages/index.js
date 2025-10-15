@@ -102,6 +102,18 @@ export default function Home() {
         羅針盤 
       </h1>
       
+
+      <p
+        className="hero-subtitle animate-fadeIn"
+        style={{ animationDelay: "1s", animationFillMode: "forwards" }}
+      >
+        羅針盤は、誰でも超簡単に使える一流データアナリストです。
+        <br />
+        <span>
+          もっと知りたいですか？
+        </span>
+      </p>
+
       {/* ★ 公式サイトリンク（タイトル直下） */}
       <div className="mt-2">
         <a
@@ -114,16 +126,7 @@ export default function Home() {
           詳細を学ぶ <span aria-hidden>↗</span>
         </a>
       </div>
-      <p
-        className="hero-subtitle animate-fadeIn"
-        style={{ animationDelay: "1s", animationFillMode: "forwards" }}
-      >
-        羅針盤は、誰でも超簡単に使える一流データアナリストです。
-        <br />
-        <span>
-          直感的に使える、AI時代のデータ分析ツールです。
-        </span>
-      </p>
+
 
       {/* アップロードUI */}
       <div
