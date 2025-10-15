@@ -97,7 +97,19 @@ export default function Home() {
       >
         羅針盤 
       </h1>
-
+      
+      {/* ★ 公式サイトリンク（タイトル直下） */}
+      <div className="mt-2">
+        <a
+          href="https://your-official-site.example.com"      // ← 公式URLに差し替え
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-blue-600 hover:underline"
+          aria-label="公式サイトを新しいタブで開く"
+        >
+          公式サイト <span aria-hidden>↗</span>
+        </a>
+      </div>
       <p
         className="hero-subtitle"
         style={{ animationDelay: "1s", animationFillMode: "forwards" }}
