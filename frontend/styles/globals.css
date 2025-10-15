@@ -234,6 +234,19 @@
   animation: spin 0.9s linear infinite;
 }
 
+.login-button--secondary {
+  margin-top: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.login-button--secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: none;
+}
+
 .login-support {
   margin-top: -0.25rem;
   font-size: 0.9rem;
