@@ -1,7 +1,8 @@
 import dynamic from "next/dynamic";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import AxisSelector from '../components/AxisSelector';
 import { createScatterPlot, createLayout } from '../utils/graphUtils';
+import Plotly from 'plotly.js-dist-min';
 
 // SSR無効化でPlotlyを読み込む
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -12,7 +13,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [xAxis, setXAxis] = useState("");
   const [yAxis, setYAxis] = useState("");
-
+  const plotRef = useRef<any>(null); 
 
   <div className="h-6 w-full bg-red-500" />
 
@@ -75,6 +76,18 @@ export default function Home() {
       }))
     : [];
 
+    // ★ 画像保存（PNG）ボタン用ハンドラ
+  const handleDownloadPng = async () => {
+    const gd = (plotRef.current as any)?.el; // react-plotly のグラフDOM
+    if (!gd) return;
+    await Plotly.downloadImage(gd, {
+      format: "png",
+      height: 800,
+      width: 1200,
+      filename: "chart",
+    });
+  };
+
   return (
     <div className="app-container">
       {/* タイトル部分 */}
@@ -124,7 +137,18 @@ export default function Home() {
           className="chart-wrapper animate-fadeIn"
           style={{ animationDelay: "2.5s", animationFillMode: "forwards" }}
         >
+          {/* ★ 画像保存ボタン */}
+          <div className="mb-2 flex justify-end">
+            <button
+              onClick={handleDownloadPng}
+              className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100"
+            >
+              画像として保存（PNG）
+            </button>
+          </div>
+
           <Plot
+            ref={plotRef}
             data={plotData}
             layout={{
               autosize: true,
