@@ -38,6 +38,30 @@
   opacity: 0;
 }
 
+/* ファイル入力（見栄えを改善） */
+.file-input {
+  display: block;
+  width: 100%;
+  color: #6b7280;
+}
+.file-input::file-selector-button {
+  margin-right: 1rem;
+  padding: .5rem 1rem;
+  border: 0;
+  border-radius: 9999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-weight: 600;
+  cursor: pointer;
+}
+.file-input::file-selector-button:hover {
+  background: #e0e7ff;
+}
+
+.loading-message { color: #3b82f6; margin-top: 1rem; animation: pulse 1.2s ease-in-out infinite; }
+.error-message   { color: #ef4444; margin-top: 1rem; }
+
+
 /* カード（アップロード領域） */
 .upload-card {
   width: 24rem;
