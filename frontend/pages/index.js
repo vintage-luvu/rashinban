@@ -13,7 +13,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [xAxis, setXAxis] = useState("");
   const [yAxis, setYAxis] = useState("");
-  const plotRef = useRef<any>(null); 
+  const plotRef = useRef(null);
 
   <div className="h-6 w-full bg-red-500" />
 
@@ -78,7 +78,7 @@ export default function Home() {
 
     // ★ 画像保存（PNG）ボタン用ハンドラ
   const handleDownloadPng = async () => {
-    const gd = (plotRef.current as any)?.el; // react-plotly のグラフDOM
+    const gd = plotRef.current?.el; // react-plotly のグラフDOM
     if (!gd) return;
     await Plotly.downloadImage(gd, {
       format: "png",
