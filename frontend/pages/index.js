@@ -485,62 +485,68 @@ export default function Home() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
-          <h1 className="text-2xl font-semibold text-gray-900">羅針盤にログイン</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            CSV アップロード機能を利用するにはログインが必要です。
-            デフォルトの資格情報は管理者にお問い合わせください。
-          </p>
-          <form className="mt-6 space-y-5" onSubmit={handleLoginSubmit}>
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-700"
-              >
+      <div className="login-page">
+        <div className="login-orb login-orb--left" aria-hidden />
+        <div className="login-orb login-orb--right" aria-hidden />
+        <div className="login-container">
+          <section className="login-hero">
+            <span className="login-badge">ようこそ</span>
+            <h1 className="login-title">羅針盤にログイン</h1>
+            <p className="login-description">
+              CSV アップロード機能を利用するにはログインが必要です。
+              デフォルトの資格情報は管理者にお問い合わせください。
+            </p>
+          </section>
+          <form className="login-card" onSubmit={handleLoginSubmit}>
+            <div className="form-field">
+              <label htmlFor="username" className="form-label">
                 ユーザー名
               </label>
-              <input
-                id="username"
-                type="text"
-                value={loginUsername}
-                onChange={(event) => setLoginUsername(event.target.value)}
-                autoComplete="username"
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                placeholder="ユーザー名を入力"
-                required
-              />
+              <div className="input-wrapper">
+                <input
+                  id="username"
+                  type="text"
+                  value={loginUsername}
+                  onChange={(event) => setLoginUsername(event.target.value)}
+                  autoComplete="username"
+                  className="login-input"
+                  placeholder="ユーザー名を入力"
+                  required
+                />
+              </div>
             </div>
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
+            <div className="form-field">
+              <label htmlFor="password" className="form-label">
                 パスワード
               </label>
-              <input
-                id="password"
-                type="password"
-                value={loginPassword}
-                onChange={(event) => setLoginPassword(event.target.value)}
-                autoComplete="current-password"
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                placeholder="パスワードを入力"
-                required
-              />
+              <div className="input-wrapper">
+                <input
+                  id="password"
+                  type="password"
+                  value={loginPassword}
+                  onChange={(event) => setLoginPassword(event.target.value)}
+                  autoComplete="current-password"
+                  className="login-input"
+                  placeholder="パスワードを入力"
+                  required
+                />
+              </div>
             </div>
             {loginError && (
-              <p className="text-sm text-red-600" role="alert">
+              <p className="form-error" role="alert">
                 {loginError}
               </p>
             )}
             <button
               type="submit"
               disabled={loginLoading}
-              className="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+              className={`login-button ${loginLoading ? "is-loading" : ""}`}
             >
-              {loginLoading ? "ログイン中..." : "ログイン"}
+              {loginLoading ? "航路を確認中..." : "ログイン"}
             </button>
+            <p className="login-support">
+              サポートが必要な場合は、システム管理者までお問い合わせください。
+            </p>
           </form>
         </div>
       </div>
