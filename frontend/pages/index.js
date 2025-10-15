@@ -10,6 +10,7 @@ export default function Home() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [xAxis, setXAxis] = useState("");
   const [yAxis, setYAxis] = useState("");
   const plotRef = useRef(null);
@@ -23,6 +24,7 @@ export default function Home() {
 
     setLoading(true);
     setError("");
+    setSuccess("");
     const formData = new FormData();
     formData.append("file", file);
 
@@ -39,9 +41,11 @@ export default function Home() {
 
       const json = await res.json();
       setData(json);
+      setSuccess("ファイルの読み込みに成功しました。");
     } catch (err) {
       console.error(err);
       setError("アップロード中に問題が発生しました。");
+      setSuccess("");
     } finally {
       setLoading(false);
     }
@@ -260,6 +264,7 @@ export default function Home() {
         {loading && (
           <p className="loading-message">📡 分析中...</p>
         )}
+        {success && <p className="success-message">{success}</p>}
         {error && <p className="error-message">{error}</p>}
       </div>
 
