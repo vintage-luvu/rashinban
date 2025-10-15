@@ -111,7 +111,7 @@ export default function Home() {
           className="inline-flex items-center gap-1 text-blue-600 hover:underline"
           aria-label="公式サイトを新しいタブで開く"
         >
-          公式サイト <span aria-hidden>↗</span>
+          詳細を学ぶ <span aria-hidden>↗</span>
         </a>
       </div>
       <p
