@@ -115,7 +115,7 @@ export default function Home() {
         </a>
       </div>
       <p
-        className="hero-subtitle"
+        className="hero-subtitle animate-fadeIn"
         style={{ animationDelay: "1s", animationFillMode: "forwards" }}
       >
         データをドラッグ＆ドロップするだけで、瞬時にグラフを作成できます。
