@@ -63,6 +63,11 @@ export default function Home() {
       setYAxis(value);
     }
   };
+
+  useEffect(() => {
+    setXAxis("");
+    setYAxis("");
+  }, [data]);
   
   // データ列を取得
   const numberFormatter = useMemo(
@@ -180,41 +185,37 @@ export default function Home() {
   }, [rowCount, columns, data]);
 
   // Plotlyデータ変換
-  const numericPlotColumns = useMemo(
-    () =>
-      columns.filter((column) => {
-        const rawValues = Array.isArray(data?.[column]) ? data[column] : [];
-        return rawValues.some(
-          (value) => typeof value === "number" && Number.isFinite(value)
-        );
-      }),
-    [columns, data]
+  const numericColumns = useMemo(() => {
+    const canCoerceToNumber = (value) => {
+      if (typeof value === "number") {
+        return Number.isFinite(value);
+      }
+
+      if (typeof value === "string" && value.trim() !== "") {
+        const parsed = Number(value);
+        return Number.isFinite(parsed);
+      }
+
+      return false;
+    };
+
+    return columns.filter((column) => {
+      const rawValues = Array.isArray(data?.[column]) ? data[column] : [];
+      return rawValues.some((value) => canCoerceToNumber(value));
+    });
+  }, [columns, data]);
+
+  const plotData = useMemo(
+    () => createScatterPlot(data, xAxis, yAxis),
+    [data, xAxis, yAxis]
   );
 
-  const plotData = useMemo(() => {
-    if (numericPlotColumns.length === 0) {
-      return [];
-    }
+  const plotLayout = useMemo(
+    () => (xAxis && yAxis ? createLayout(xAxis, yAxis) : null),
+    [xAxis, yAxis]
+  );
 
-    return numericPlotColumns.map((column) => {
-      const rawValues = Array.isArray(data?.[column]) ? data[column] : [];
-      return {
-        x: rawValues.map((_, index) => index),
-        y: rawValues.map((value) =>
-          typeof value === "number" && Number.isFinite(value) ? value : null
-        ),
-        type: "scatter",
-        mode: "lines+markers",
-        name: column,
-        marker: {
-          size: 6,
-        },
-        line: {
-          width: 3,
-        },
-      };
-    });
-  }, [numericPlotColumns, data]);
+  const canRenderPlot = plotLayout && plotData.length > 0;
 
   const datasetSummaryInput = useMemo(() => {
     if (!hasUploadedData) {
@@ -643,39 +644,66 @@ export default function Home() {
       )}
 
       {/* グラフ表示 */}
-      {plotData.length > 0 && (
-        <div
-          className="chart-wrapper animate-fadeIn"
+      {hasUploadedData && (
+        <section
+          className="mt-8 w-full max-w-4xl space-y-4 rounded-2xl bg-white/80 p-6 shadow-lg backdrop-blur animate-fadeIn"
           style={{ animationDelay: "2.5s", animationFillMode: "forwards" }}
         >
-          {/* ★ 画像保存ボタン */}
-          <div className="mb-2 flex justify-end">
-            <button
-              onClick={handleDownloadPng}
-              className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100"
-            >
-              画像として保存（PNG）
-            </button>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-slate-900">グラフ表示</h2>
+            <span className="text-sm text-slate-500">
+              任意のX軸・Y軸を選択すると散布図を生成します
+            </span>
           </div>
 
-          <Plot
-            ref={plotRef}
-            data={plotData}
-            layout={{
-              autosize: true,
-              title: "📈 アップロードしたCSVの可視化結果",
-              paper_bgcolor: "rgba(248, 250, 252, 0.85)",
-              plot_bgcolor: "rgba(248, 250, 252, 0.85)",
-              font: {
-                family: "'Noto Sans JP', 'Inter', system-ui",
-              },
-              margin: { l: 50, r: 30, t: 80, b: 50 },
-            }}
-            config={{ responsive: true, displaylogo: false }}
-            useResizeHandler
-            style={{ width: "100%", height: "100%" }}
-          />
-        </div>
+          {numericColumns.length >= 2 ? (
+            <>
+              <AxisSelector
+                columns={numericColumns}
+                xAxis={xAxis}
+                yAxis={yAxis}
+                onAxisChange={handleAxisChange}
+              />
+
+              {!xAxis || !yAxis ? (
+                <p className="text-sm text-slate-500">
+                  X軸とY軸を選択すると散布図がここに表示されます。
+                </p>
+              ) : canRenderPlot ? (
+                <div
+                  className="chart-wrapper animate-fadeIn"
+                  style={{ animationDelay: "2.8s", animationFillMode: "forwards" }}
+                >
+                  <div className="mb-2 flex justify-end">
+                    <button
+                      onClick={handleDownloadPng}
+                      className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100"
+                    >
+                      画像として保存（PNG）
+                    </button>
+                  </div>
+
+                  <Plot
+                    ref={plotRef}
+                    data={plotData}
+                    layout={plotLayout}
+                    config={{ responsive: true, displaylogo: false }}
+                    useResizeHandler
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-rose-600">
+                  選択した列に有効な数値データが見つかりませんでした。
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-slate-500">
+              散布図を作成するには数値データを含む列が2つ以上必要です。
+            </p>
+          )}
+        </section>
       )}
     </div>
   );
