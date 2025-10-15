@@ -8,16 +8,21 @@
 - `pip`, `npm` (または `yarn`)
 
 ## バックエンド (FastAPI)
-1. 依存パッケージをインストールします。
+1. 認証用のユーザー名とパスワードを環境変数として設定します（未設定の場合は `admin` / `password123` が使われます）。
+   ```bash
+   export LOGIN_USERNAME=your-username
+   export LOGIN_PASSWORD=your-password
+   ```
+2. 依存パッケージをインストールします。
    ```bash
    cd backend
    pip install -r requirements.txt
    ```
-2. 開発サーバーを起動します。
+3. 開発サーバーを起動します。
    ```bash
    uvicorn main:app --reload --host 0.0.0.0 --port 8000
    ```
-3. `http://127.0.0.1:8000/docs` にアクセスすると Swagger UI から `/upload-csv` を確認できます。
+4. `http://127.0.0.1:8000/docs` にアクセスすると Swagger UI から `/upload-csv` を確認できます。
 
 ## フロントエンド (Next.js)
 1. 別ターミナルでフロントエンド用の依存パッケージをインストールします。
@@ -29,7 +34,7 @@
    ```bash
    npm run dev
    ```
-3. ブラウザで `http://localhost:3000` を開くと、CSV アップロード画面が表示されます。
+3. ブラウザで `http://localhost:3000` を開き、ログイン後に CSV アップロード画面が表示されます。
 
 ## 動作確認
 1. バックエンドとフロントエンドの両方が起動している状態で、画面の「ファイルを選択」からサンプル CSV をアップロードします。
