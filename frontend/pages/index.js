@@ -493,8 +493,8 @@ export default function Home() {
             <span className="login-badge">ようこそ</span>
             <h1 className="login-title">羅針盤にログイン</h1>
             <p className="login-description">
-              CSV アップロード機能を利用するにはログインが必要です。
-              デフォルトの資格情報は管理者にお問い合わせください。
+              ようこそ、また会いました。
+              ログインして、新たな発見を始めよう。
             </p>
           </section>
           <form className="login-card" onSubmit={handleLoginSubmit}>
