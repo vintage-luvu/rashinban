@@ -1,8 +1,7 @@
 import dynamic from "next/dynamic";
 import React, { useRef, useState } from "react";
-import AxisSelector from '../components/AxisSelector';
-import { createScatterPlot, createLayout } from '../utils/graphUtils';
-import Plotly from 'plotly.js-dist-min';
+import AxisSelector from "../components/AxisSelector";
+import { createScatterPlot, createLayout } from "../utils/graphUtils";
 
 // SSR無効化でPlotlyを読み込む
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -15,7 +14,7 @@ export default function Home() {
   const [yAxis, setYAxis] = useState("");
   const plotRef = useRef(null);
 
-  <div className="h-6 w-full bg-red-500" />
+  const plotlyModuleRef = useRef(null);
 
   // CSVアップロード処理
   const handleFileChange = async (e) => {
@@ -80,7 +79,12 @@ export default function Home() {
   const handleDownloadPng = async () => {
     const gd = plotRef.current?.el; // react-plotly のグラフDOM
     if (!gd) return;
-    await Plotly.downloadImage(gd, {
+    if (!plotlyModuleRef.current) {
+      const plotlyModule = await import("plotly.js-dist-min");
+      plotlyModuleRef.current = plotlyModule.default ?? plotlyModule;
+    }
+
+    await plotlyModuleRef.current.downloadImage(gd, {
       format: "png",
       height: 800,
       width: 1200,
