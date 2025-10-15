@@ -118,7 +118,7 @@ export default function Home() {
         className="hero-subtitle animate-fadeIn"
         style={{ animationDelay: "1s", animationFillMode: "forwards" }}
       >
-        データをドラッグ＆ドロップするだけで、瞬時にグラフを作成できます。
+        羅針盤は、誰でも超簡単に使える一流データアナリストです。
         <br />
         <span>
           直感的に使える、AI時代のデータ分析ツールです。
