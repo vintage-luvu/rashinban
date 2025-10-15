@@ -131,7 +131,7 @@ export default function Home() {
         style={{ animationDelay: "1.8s", animationFillMode: "forwards" }}
       >
         <p className="upload-instruction">
-          CSVファイルをアップロードしてください
+          CSVファイルをアップロードで自動分析
         </p>
 
         <input
