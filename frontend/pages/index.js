@@ -41,7 +41,7 @@ export default function Home() {
 
       const json = await res.json();
       setData(json);
-      setSuccess("ファイルの読み込みに成功しました。");
+      setSuccess("いい調子！ファイルの読み込みに成功。");
     } catch (err) {
       console.error(err);
       setError("アップロード中に問題が発生しました。");
