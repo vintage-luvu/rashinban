@@ -56,6 +56,8 @@ export default function Home() {
   };
   
 
+  // 数値列のみを取得
+  const numericColumns = data ? Object.keys(data) : [];
   // Plotlyデータ変換
   const plotData = data
     ? Object.keys(data).map((col) => ({
