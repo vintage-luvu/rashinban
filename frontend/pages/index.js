@@ -173,6 +173,8 @@ export default function Home() {
       const headers = {};
       if (authToken) {
         headers.Authorization = `Bearer ${authToken}`;
+      } else if (isBypassMode) {
+        headers["X-Bypass-Mode"] = "true";
       }
 
       const res = await fetch(`${backendBaseUrl}/upload-csv`, {
@@ -189,7 +191,7 @@ export default function Home() {
           }
 
           throw new Error(
-            "現在は一時的なログインスキップモードです。正式ログイン後に再度お試しください。"
+            "バイパスモードでリクエストが拒否されました。時間をおいて再度お試しください。"
           );
         }
 
@@ -602,7 +604,7 @@ export default function Home() {
     <div className="app-container">
       {isBypassMode && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          一時的なログインスキップモードで利用中です。アップロードなど一部機能は動作しない場合があります。
+          一時的なログインスキップモードで利用中です。すべての機能を利用できますが、取り扱いにはご注意ください。
         </div>
       )}
       <div className="flex w-full max-w-6xl items-center justify-end gap-4 self-end">
