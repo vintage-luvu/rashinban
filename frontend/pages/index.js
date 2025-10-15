@@ -19,6 +19,8 @@ export default function Home() {
   const plotRef = useRef(null);
 
   const plotlyModuleRef = useRef(null);
+  const summarySectionRef = useRef(null);
+  const previousAiSummaryLoading = useRef(false);
 
   // CSVアップロード処理
   const handleFileChange = async (e) => {
@@ -320,6 +322,21 @@ export default function Home() {
     };
   }, [datasetSummaryInput]);
 
+  useEffect(() => {
+    if (
+      hasUploadedData &&
+      !aiSummaryLoading &&
+      previousAiSummaryLoading.current &&
+      summarySectionRef.current
+    ) {
+      summarySectionRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+    previousAiSummaryLoading.current = aiSummaryLoading;
+  }, [aiSummaryLoading, hasUploadedData]);
+
   const formatNumber = (value) => {
     if (typeof value !== "number" || Number.isNaN(value)) {
       return "―";
@@ -407,6 +424,7 @@ export default function Home() {
         <section
           className="mt-8 w-full max-w-4xl space-y-6 rounded-2xl bg-white/80 p-6 shadow-lg backdrop-blur animate-fadeIn"
           style={{ animationDelay: "2s", animationFillMode: "forwards" }}
+          ref={summarySectionRef}
         >
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-slate-900">
