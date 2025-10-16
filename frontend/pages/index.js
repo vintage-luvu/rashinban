@@ -2,12 +2,31 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import AxisSelector from "../components/AxisSelector";
 import { createScatterPlot, createLayout } from "../utils/graphUtils";
+import { applyPreprocessing } from "../utils/preprocessing";
+
+const LOG_PARAMETER_LABELS = {
+  column: "列",
+  method: "手法",
+  median: "中央値",
+  missingCount: "欠損数",
+  fillValue: "補完値",
+  lowerBound: "下限",
+  upperBound: "上限",
+  q1: "第1四分位",
+  q3: "第3四分位",
+  mean: "平均",
+  stdDev: "標準偏差",
+  derivedColumn: "生成列",
+  source: "元列",
+  skipped: "スキップ",
+};
 
 // SSR無効化でPlotlyを読み込む
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 export default function Home() {
   const [data, setData] = useState(null);
+  const [originalData, setOriginalData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -22,6 +41,8 @@ export default function Home() {
   const [aiSummary, setAiSummary] = useState("");
   const [aiSummaryError, setAiSummaryError] = useState("");
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [transformationLog, setTransformationLog] = useState([]);
+  const [isTransforming, setIsTransforming] = useState(false);
   const [xAxis, setXAxis] = useState("");
   const [yAxis, setYAxis] = useState("");
   const plotRef = useRef(null);
@@ -76,8 +97,11 @@ export default function Home() {
       setLoggedInUser("");
       setLoginPassword("");
       setData(null);
+      setOriginalData(null);
       setSuccess("");
       setError("");
+      setTransformationLog([]);
+      setIsTransforming(false);
 
       if (typeof window !== "undefined") {
         window.localStorage.removeItem("authToken");
@@ -93,6 +117,12 @@ export default function Home() {
     setLoggedInUser("ゲストユーザー");
     setLoginError("");
     setLoginPassword("");
+    setData(null);
+    setOriginalData(null);
+    setTransformationLog([]);
+    setSuccess("");
+    setError("");
+    setIsTransforming(false);
 
     if (typeof window !== "undefined") {
       window.localStorage.removeItem("authToken");
@@ -200,6 +230,9 @@ export default function Home() {
 
       const json = await res.json();
       setData(json);
+      setOriginalData(json);
+      setTransformationLog([]);
+      setIsTransforming(false);
       setSuccess("いい調子！ファイルの読み込みに成功。");
     } catch (err) {
       console.error(err);
@@ -211,6 +244,45 @@ export default function Home() {
       setSuccess("");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOneClickTransform = () => {
+    if (!data) {
+      setError("前処理対象のデータがありません。");
+      return;
+    }
+
+    if (isTransforming) {
+      return;
+    }
+
+    setIsTransforming(true);
+    setError("");
+
+    try {
+      const sourceDataset =
+        originalData && Object.keys(originalData).length > 0
+          ? originalData
+          : data;
+      const { processedData, log } = applyPreprocessing(sourceDataset);
+
+      if (!processedData || Object.keys(processedData).length === 0) {
+        throw new Error("前処理を適用できる列がありませんでした。");
+      }
+
+      setData(processedData);
+      setTransformationLog(log);
+      setSuccess("ワンクリック変換を適用しました。");
+    } catch (err) {
+      console.error(err);
+      const message =
+        err instanceof Error && typeof err.message === "string"
+          ? err.message
+          : "前処理の適用中に問題が発生しました。";
+      setError(message);
+    } finally {
+      setIsTransforming(false);
     }
   };
 
@@ -244,6 +316,11 @@ export default function Home() {
 
   const columns = useMemo(() => (data ? Object.keys(data) : []), [data]);
   const hasUploadedData = columns.length > 0;
+  const transformButtonDisabled = isTransforming || !hasUploadedData;
+  const transformButtonLabel = isTransforming ? "処理中..." : "ワンクリック変換";
+  const transformButtonClass = transformButtonDisabled
+    ? "rounded-lg px-4 py-2 text-sm font-medium text-white shadow bg-emerald-300 cursor-not-allowed"
+    : "rounded-lg px-4 py-2 text-sm font-medium text-white shadow bg-emerald-500 transition hover:bg-emerald-600";
 
   const rowCount = useMemo(() => {
     return columns.reduce((max, column) => {
@@ -718,6 +795,75 @@ export default function Home() {
                   要約を表示する準備が整うとここに表示されます。
                 </p>
               )}
+            </div>
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                    前処理（ワンクリック）
+                  </h3>
+                  <p className="mt-1 text-sm text-emerald-700">
+                    欠損補完・外れ値カット・標準化・派生列生成を自動で実行します。
+                  </p>
+                </div>
+                <button
+                  onClick={handleOneClickTransform}
+                  disabled={transformButtonDisabled}
+                  className={transformButtonClass}
+                >
+                  {transformButtonLabel}
+                </button>
+              </div>
+              <div className="mt-3 rounded-lg border border-emerald-100 bg-white/70 p-3">
+                {transformationLog.length > 0 ? (
+                  <ol className="space-y-2 text-sm text-emerald-800">
+                    {transformationLog.map((entry, index) => (
+                      <li
+                        key={`${entry.step}-${index}`}
+                        className="rounded-md bg-emerald-50/80 p-2"
+                      >
+                        <p className="font-semibold">
+                          {index + 1}. {entry.step}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-emerald-700">
+                          {entry.description}
+                        </p>
+                        {entry.parameters && (
+                          <dl className="mt-1 grid gap-x-4 gap-y-1 text-[11px] text-emerald-600 sm:grid-cols-2">
+                            {Object.entries(entry.parameters).map(([key, value]) => (
+                              <div
+                                key={`${entry.step}-${key}-${index}`}
+                                className="flex items-baseline gap-1"
+                              >
+                                <dt className="font-semibold">
+                                  {LOG_PARAMETER_LABELS[key] ?? key}
+                                </dt>
+                                <dd className="truncate">
+                                  {typeof value === "number" && Number.isFinite(value)
+                                    ? numberFormatter.format(value)
+                                    : typeof value === "boolean"
+                                    ? value
+                                      ? "はい"
+                                      : "いいえ"
+                                    : value === null || value === undefined
+                                    ? "―"
+                                    : String(value)}
+                                </dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-sm text-emerald-700">
+                    {isTransforming
+                      ? "前処理を実行しています..."
+                      : "まだ前処理は実行されていません。ボタンを押して自動整形を行えます。"}
+                  </p>
+                )}
+              </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               <div className="rounded-xl border border-slate-200 bg-white/70 p-4">
