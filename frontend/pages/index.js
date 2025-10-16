@@ -530,7 +530,7 @@ export default function Home() {
             <span className="login-badge">ようこそ</span>
             <h1 className="login-title">羅針盤にログイン</h1>
             <p className="login-description">
-              ようこそ、また会いました。
+              また会いました。
               ログインして、新たな発見を始めよう。
             </p>
           </section>
