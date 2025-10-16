@@ -751,11 +751,74 @@ export default function Home() {
         </section>
       )}
 
+      {/* グラフ表示 */}
+      {hasUploadedData && (
+        <section
+          className="mt-8 w-full max-w-4xl space-y-4 rounded-2xl bg-white/80 p-6 shadow-lg backdrop-blur animate-fadeIn"
+          style={{ animationDelay: "2.3s", animationFillMode: "forwards" }}
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-slate-900">グラフ表示</h2>
+            <span className="text-sm text-slate-500">
+              任意のX軸・Y軸を選択すると散布図を生成します
+            </span>
+          </div>
+
+          {numericColumns.length >= 2 ? (
+            <>
+              <AxisSelector
+                columns={numericColumns}
+                xAxis={xAxis}
+                yAxis={yAxis}
+                onAxisChange={handleAxisChange}
+              />
+
+              {!xAxis || !yAxis ? (
+                <p className="text-sm text-slate-500">
+                  X軸とY軸を選択すると散布図がここに表示されます。
+                </p>
+              ) : canRenderPlot ? (
+                <div
+                  className="chart-wrapper animate-fadeIn"
+                  style={{ animationDelay: "2.8s", animationFillMode: "forwards" }}
+                >
+                  <div className="mb-2 flex justify-end">
+                    <button
+                      onClick={handleDownloadPng}
+                      className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100"
+                    >
+                      画像として保存（PNG）
+                    </button>
+                  </div>
+
+                  <Plot
+                    ref={plotRef}
+                    data={plotData}
+                    layout={plotLayout}
+                    config={{ responsive: true, displaylogo: false }}
+                    useResizeHandler
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-rose-600">
+                  選択した列に有効な数値データが見つかりませんでした。
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-slate-500">
+              散布図を作成するには数値データを含む列が2つ以上必要です。
+            </p>
+          )}
+        </section>
+      )}
+
       {/* 詳しく見る */}
       {hasUploadedData && (
         <section
           className="mt-8 w-full max-w-4xl space-y-6 rounded-2xl bg-white/80 p-6 shadow-lg backdrop-blur animate-fadeIn"
-          style={{ animationDelay: "2.3s", animationFillMode: "forwards" }}
+          style={{ animationDelay: "2.5s", animationFillMode: "forwards" }}
         >
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-slate-900">詳しく見る</h2>
@@ -918,68 +981,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* グラフ表示 */}
-      {hasUploadedData && (
-        <section
-          className="mt-8 w-full max-w-4xl space-y-4 rounded-2xl bg-white/80 p-6 shadow-lg backdrop-blur animate-fadeIn"
-          style={{ animationDelay: "2.5s", animationFillMode: "forwards" }}
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-slate-900">グラフ表示</h2>
-            <span className="text-sm text-slate-500">
-              任意のX軸・Y軸を選択すると散布図を生成します
-            </span>
-          </div>
 
-          {numericColumns.length >= 2 ? (
-            <>
-              <AxisSelector
-                columns={numericColumns}
-                xAxis={xAxis}
-                yAxis={yAxis}
-                onAxisChange={handleAxisChange}
-              />
-
-              {!xAxis || !yAxis ? (
-                <p className="text-sm text-slate-500">
-                  X軸とY軸を選択すると散布図がここに表示されます。
-                </p>
-              ) : canRenderPlot ? (
-                <div
-                  className="chart-wrapper animate-fadeIn"
-                  style={{ animationDelay: "2.8s", animationFillMode: "forwards" }}
-                >
-                  <div className="mb-2 flex justify-end">
-                    <button
-                      onClick={handleDownloadPng}
-                      className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100"
-                    >
-                      画像として保存（PNG）
-                    </button>
-                  </div>
-
-                  <Plot
-                    ref={plotRef}
-                    data={plotData}
-                    layout={plotLayout}
-                    config={{ responsive: true, displaylogo: false }}
-                    useResizeHandler
-                    style={{ width: "100%", height: "100%" }}
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-rose-600">
-                  選択した列に有効な数値データが見つかりませんでした。
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-slate-500">
-              散布図を作成するには数値データを含む列が2つ以上必要です。
-            </p>
-          )}
-        </section>
-      )}
     </div>
   );
 }
