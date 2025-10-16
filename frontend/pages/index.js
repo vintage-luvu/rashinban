@@ -1,3 +1,4 @@
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import AxisSelector from "../components/AxisSelector";
@@ -581,6 +582,12 @@ export default function Home() {
             >
               {loginLoading ? "航路を確認中..." : "ログイン"}
             </button>
+            <Link
+              href="/why"
+              className="login-button login-button--link"
+            >
+              このサービスが必要な理由を見る
+            </Link>
             <button
               type="button"
               className="login-button login-button--secondary"

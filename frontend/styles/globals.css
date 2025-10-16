@@ -247,6 +247,21 @@
   box-shadow: none;
 }
 
+.login-button--link {
+  margin-top: 0.75rem;
+  background: rgba(15, 23, 42, 0.55);
+  color: #bfdbfe;
+  box-shadow: none;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  text-decoration: none;
+}
+
+.login-button--link:hover {
+  background: rgba(37, 99, 235, 0.35);
+  color: #fff;
+  box-shadow: none;
+}
+
 .login-support {
   margin-top: -0.25rem;
   font-size: 0.9rem;
