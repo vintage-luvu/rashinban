@@ -22,6 +22,7 @@ export default function Home() {
   const [aiSummary, setAiSummary] = useState("");
   const [aiSummaryError, setAiSummaryError] = useState("");
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [isSideTabOpen, setIsSideTabOpen] = useState(true);
   const [xAxis, setXAxis] = useState("");
   const [yAxis, setYAxis] = useState("");
   const plotRef = useRef(null);
@@ -602,6 +603,40 @@ export default function Home() {
 
   return (
     <div className="app-container">
+      <div
+        className={`side-tab ${isSideTabOpen ? "is-open" : "is-closed"}`}
+        aria-live="polite"
+      >
+        <button
+          type="button"
+          className="side-tab__toggle"
+          onClick={() => setIsSideTabOpen((previous) => !previous)}
+          aria-expanded={isSideTabOpen}
+          aria-controls="side-tab-content"
+        >
+          {isSideTabOpen ? "閉じる" : "ヒント"}
+        </button>
+        <div className="side-tab__content" id="side-tab-content">
+          <h2 className="side-tab__title">ご利用のヒント</h2>
+          <ol className="side-tab__list">
+            <li>
+              <span className="side-tab__step">1</span>
+              ログイン、またはバイパスモードで開始します。
+            </li>
+            <li>
+              <span className="side-tab__step">2</span>
+              CSVファイルをアップロードすると自動で分析が始まります。
+            </li>
+            <li>
+              <span className="side-tab__step">3</span>
+              AI要約やグラフで気になるポイントを深掘りしましょう。
+            </li>
+          </ol>
+          <p className="side-tab__note">
+            左下のタブを折りたたむと画面を広く使えます。
+          </p>
+        </div>
+      </div>
       {isBypassMode && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           一時的なログインスキップモードで利用中です。すべての機能を利用できますが、取り扱いにはご注意ください。
