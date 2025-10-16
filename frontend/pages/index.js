@@ -747,7 +747,24 @@ export default function Home() {
                 </p>
               </div>
             </div>
+          </div>
+        </section>
+      )}
 
+      {/* 詳しく見る */}
+      {hasUploadedData && (
+        <section
+          className="mt-8 w-full max-w-4xl space-y-6 rounded-2xl bg-white/80 p-6 shadow-lg backdrop-blur animate-fadeIn"
+          style={{ animationDelay: "2.3s", animationFillMode: "forwards" }}
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-slate-900">詳しく見る</h2>
+            <span className="text-sm text-slate-500">
+              列ごとの詳細情報やプレビューを確認できます
+            </span>
+          </div>
+
+          <div className="space-y-6">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 列情報
